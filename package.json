@@ -1,0 +1,17 @@
+{
+  "name": "kindlizer",
+  "version": "0.1.0",
+  "description": "Dump an article from the internet into a DOCX file ready to mail to a Kindle",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "QuietMisdreavus",
+  "license": "MPL-2.0",
+  "preferGlobal": true,
+  "bin": {
+    "kindlizer": "index.js"
+  },
+  "dependencies": {
+    "@postlight/mercury-parser": "^2.2.0"
+  }
+}
