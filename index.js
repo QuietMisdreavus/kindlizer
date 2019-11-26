@@ -1,10 +1,14 @@
 #!/usr/bin/env node
 
+const fs = require('fs');
+const http = require('http');
+const url = require('url');
 const util = require('util');
 
 const request = require('request-promise-native');
 const Mercury = require('@postlight/mercury-parser');
 const nodePandoc = require('node-pandoc');
+const tempy = require('tempy');
 
 // node-pandoc is a function which takes a callback, but i want to use a promise
 const pandoc = util.promisify(nodePandoc);
@@ -31,17 +35,42 @@ async function pandocToFile(article, filename) {
     }
 }
 
-if (process.argv.length <= 2) {
-    console.log('call this with a URL to fetch');
-    return;
-}
+const server = http.createServer(async function (req, res) {
+    var url = new URL(req.url, 'http://tonberry.quietmisdreavus.net:8080/');
+    if (url.pathname == '/article') {
+        var articleUrl = url.searchParams.get('url');
+        if (articleUrl) {
+            try {
+                var result = await renderArticle(articleUrl);
+                var outputFilename = `${result.title}.docx`;
+                var tempFilename = tempy.file({ extension: 'docx' });
+                var filename = await pandocToFile(result, tempFilename);
 
-var url = process.argv[2];
+                res.statusCode = 200;
+                res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+                res.setHeader('Content-Disposition', `inline; filename="${outputFilename}"`);
+                var readStream = fs.createReadStream(filename);
+                readStream.pipe(res);
+            } catch (err) {
+                res.statusCode = 500;
+                res.setHeader('Content-Type', 'text/plain');
+                res.end(`something happened:\n${err}`);
+            }
+        } else {
+            res.statusCode = 400;
+            res.setHeader('Content-Type', 'text/plain');
+            res.end('hi, what?\n');
+        }
+    } else {
+        res.statusCode = 404;
+        res.setHeader('Content-Type', 'text/plain');
+        res.end('hi, what?\n');
+    }
+});
 
-renderArticle(url).then(function(result) {
-    return pandocToFile(result);
-}).then(function(filename) {
-    console.log('file written to:', filename);
-}).catch(function(err) {
-    console.log('ERROR:', err);
+const hostname = '0.0.0.0';
+const port = 8080;
+
+server.listen(port, hostname, function () {
+    console.log(`server online at http://${hostname}:${port}/`);
 });

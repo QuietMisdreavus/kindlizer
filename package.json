@@ -15,6 +15,7 @@
     "@postlight/mercury-parser": "^2.2.0",
     "node-pandoc": "^0.3.0",
     "request": "^2.88.0",
-    "request-promise-native": "^1.0.8"
+    "request-promise-native": "^1.0.8",
+    "tempy": "^0.3.0"
   }
 }
